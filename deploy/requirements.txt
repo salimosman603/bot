@@ -3,4 +3,5 @@ python-dotenv
 fake-useragent
 flask
 numpy
-requests
+PySocks
+requests[socks]

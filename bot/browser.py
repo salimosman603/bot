@@ -23,9 +23,10 @@ class BrowserWrapper:
         self.playwright = sync_playwright().start()
         
         # Use Google Chrome for better stealth
+        # In create_context method:
         browser = self.playwright.chromium.launch(
-            headless=False,  # Critical for detection avoidance
-            executable_path="/usr/bin/google-chrome-stable",
+            headless=True,  # MUST be True in Docker
+            # Remove executable_path (use Playwright's Chromium)
             proxy={"server": proxy['server']} if proxy else None,
             args=[
                 f'--user-agent={fingerprint["user_agent"]}',
@@ -33,7 +34,8 @@ class BrowserWrapper:
                 f'--lang={fingerprint["locale"]}',
                 '--disable-blink-features=AutomationControlled',
                 '--disable-dev-shm-usage',
-                '--no-sandbox'
+                '--no-sandbox',
+                '--single-process'  # Reduces resource usage
             ]
         )
         context = browser.new_context(

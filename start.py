@@ -1,9 +1,15 @@
 import os
 from bot.runner import BotRunner
-from flask import Flask
+from flask import Flask, redirect
 import threading
 
+# Create Flask app first
 app = Flask(__name__)
+
+# Then define routes
+@app.route('/')
+def root():
+    return redirect('/health', code=302)
 
 @app.route('/health')
 def health_check():

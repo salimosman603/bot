@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Install dependencies including Tor and GUI libraries
+# Install dependencies
 RUN apt-get update && \
     apt-get install -y \
     wget \
@@ -23,26 +23,29 @@ RUN apt-get update && \
     libpangocairo-1.0-0 \
     libpango-1.0-0 \
     libharfbuzz0b \
-    libgdk-pixbuf2.0-0
-
-# Install Google Chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list && \
-    apt-get update && \
-    apt-get install -y google-chrome-stable
+    libgdk-pixbuf2.0-0 \
+    libsocks5-dev \  # NEW
+    libsodium-dev    # NEW
 
 # Configure Tor
-RUN echo "SocksPort 0.0.0.0:9050" >> /etc/tor/torrc
-RUN echo "Log notice stdout" >> /etc/tor/torrc
-RUN echo "ExitPolicy reject *:*" >> /etc/tor/torrc  # Prevent becoming exit node
+RUN echo "SocksPort 0.0.0.0:9050" >> /etc/tor/torrc && \
+    echo "Log notice stdout" >> /etc/tor/torrc && \
+    echo "ExitPolicy reject *:*" >> /etc/tor/torrc
 
 # Set up application
 WORKDIR /app
 COPY . .
-RUN pip install -r deploy/requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r deploy/requirements.txt
 
 # Install Playwright browsers
 RUN playwright install chromium
+
+# Cleanup to reduce image size
+RUN apt-get purge -y wget gnupg && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 
 # Start services
 CMD service tor start && \
