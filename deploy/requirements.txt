@@ -1,0 +1,6 @@
+playwright
+python-dotenv
+fake-useragent
+flask
+numpy
+requests

@@ -1,0 +1,13 @@
+# Ignore environment files and Python virtual env
+.env
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+ENV/
+*.sqlite3
+*.log
+logs/
