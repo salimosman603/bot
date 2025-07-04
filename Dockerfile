@@ -24,8 +24,7 @@ RUN apt-get update && \
     libpango-1.0-0 \
     libharfbuzz0b \
     libgdk-pixbuf2.0-0 \
-    libsodium-dev \
-    libsocks5-1  # Corrected package name
+    libsodium-dev
 
 # Configure Tor
 RUN echo "SocksPort 0.0.0.0:9050" >> /etc/tor/torrc && \
