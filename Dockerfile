@@ -1,10 +1,8 @@
 FROM python:3.10-slim
 
-# Install dependencies
+# Install dependencies with xvfb and mesa
 RUN apt-get update && \
     apt-get install -y \
-    wget \
-    gnupg \
     tor \
     xvfb \
     libnss3 \
@@ -24,7 +22,11 @@ RUN apt-get update && \
     libpango-1.0-0 \
     libharfbuzz0b \
     libgdk-pixbuf2.0-0 \
-    libsodium-dev
+    libsodium-dev \
+    mesa-utils \        
+    libgl1-mesa-glx \   
+    libgl1-mesa-dri \   
+    xauth           
 
 # Configure Tor
 RUN echo "SocksPort 0.0.0.0:9050" >> /etc/tor/torrc && \
@@ -42,12 +44,12 @@ RUN pip install --no-cache-dir -r deploy/requirements.txt
 RUN playwright install chromium
 
 # Cleanup to reduce image size
-RUN apt-get purge -y wget gnupg && \
+RUN apt-get purge -y && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
-# Start services
-CMD service tor start && \
-    Xvfb :0 -screen 0 1024x768x24 & \
-    export DISPLAY=:0 && \
+# Start services with proper Xvfb management
+CMD Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset & \
+    export DISPLAY=:99 && \
+    service tor start && \
     python start.py
