@@ -17,7 +17,7 @@ class BrowserWrapper:
         self.playwright = None
 
     def create_context(self):
-        proxy = self.proxy_manager.get_verified_proxy()  # Get verified proxy
+        proxy = self.proxy_manager.get_verified_proxy()
         fingerprint = self.fingerprint_generator.generate()
         
         self.playwright = sync_playwright().start()
@@ -32,7 +32,7 @@ class BrowserWrapper:
                 '--disable-blink-features=AutomationControlled',
                 '--disable-dev-shm-usage',
                 '--no-sandbox',
-                '--single-process'  # Reduces resource usage
+                '--single-process'
             ]
         )
         context = browser.new_context(
@@ -59,7 +59,7 @@ class BrowserWrapper:
             # Start session at random entry point
             entry_url = urljoin(target_config['base_url'], random.choice(target_config['entry_paths']))
             
-            # Bypass anti-bot measures with indirect navigation
+            # Bypass anti-bot measures
             page.goto("https://google.com", timeout=60000)
             time.sleep(3)
             page.goto(entry_url, timeout=120000)
@@ -94,7 +94,7 @@ class BrowserWrapper:
                         time.sleep(target_config['ad_wait_time'])
             
             # Final ad click before closing
-            if random.random() < 0.7:  # 70% chance to click ad at session end
+            if random.random() < 0.7 and ad_count > 0:
                 self.click_random_ad(page, target_config)
                 
         except Exception as e:
@@ -109,17 +109,14 @@ class BrowserWrapper:
         ad_count = 0
         for selector in selectors:
             try:
-                # Handle iframes separately
-                if 'iframe' in selector:
-                    frames = page.query_selector_all(selector)
-                    for frame in frames:
-                        # Check if iframe is visible
-                        if frame.is_visible():
-                            ad_count += 1
-                else:
-                    ad_count += page.locator(selector).count()
-            except:
-                continue  # Skip invalid selectors
+                # Count all matching elements
+                elements = page.query_selector_all(selector)
+                for element in elements:
+                    # Check if element is visible
+                    if element.is_visible():
+                        ad_count += 1
+            except Exception as e:
+                self.logger.warning(f"Selector error: {selector} - {str(e)}")
         return ad_count
 
     def interact_with_page(self, page, target_config):
@@ -167,8 +164,8 @@ class BrowserWrapper:
                 for element in elements:
                     if element.is_visible():
                         visible_ads.append(element)
-            except:
-                continue  # Skip invalid selectors
+            except Exception as e:
+                self.logger.warning(f"Ad selector error: {selector} - {str(e)}")
         
         if not visible_ads:
             self.logger.warning("No visible ads to click")
@@ -177,29 +174,26 @@ class BrowserWrapper:
         # Select random ad
         ad = random.choice(visible_ads)
         
-        # Handle iframes differently
-        if ad.tag_name() == 'iframe':
-            # Click near the center of the iframe
+        try:
+            # Get tag name using evaluate
+            tag_name = ad.evaluate("element => element.tagName.toLowerCase()")
             box = ad.bounding_box()
-            human_click(
-                page, 
-                box['x'] + box['width']/2 + random.uniform(-5, 5),
-                box['y'] + box['height']/2 + random.uniform(-5, 5)
-            )
-            self.logger.info(f"Clicked iframe ad at position ({box['x']}, {box['y']})")
-        else:
-            # Regular element click
-            box = ad.bounding_box()
-            human_click(
-                page, 
-                box['x'] + box['width']/2 + random.uniform(-5, 5),
-                box['y'] + box['height']/2 + random.uniform(-5, 5)
-            )
-            self.logger.info(f"Clicked element ad at position ({box['x']}, {box['y']})")
-        
-        # Stay on ad page
-        time.sleep(random.uniform(8, 25))
-        return True
+            
+            # Calculate click position
+            click_x = box['x'] + box['width']/2 + random.uniform(-5, 5)
+            click_y = box['y'] + box['height']/2 + random.uniform(-5, 5)
+            
+            # Click with human-like precision
+            human_click(page, click_x, click_y)
+            
+            self.logger.info(f"Clicked {tag_name} ad at position ({box['x']}, {box['y']})")
+            
+            # Stay on ad page
+            time.sleep(random.uniform(8, 25))
+            return True
+        except Exception as e:
+            self.logger.error(f"Ad click failed: {str(e)}")
+            return False
 
     def find_internal_link(self, page, target_config, visited_pages):
         # Find internal links not yet visited
