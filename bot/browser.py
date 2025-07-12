@@ -41,18 +41,31 @@ class BrowserWrapper:
         proxy = self.proxy_manager.get_verified_proxy()
         device_profile = self._load_device_profile()
         
-        # Use device profile if available, otherwise generate fingerprint
+        # Enhanced device profile handling with validation
+        fingerprint = {}
         if device_profile:
+            # Use correct key names from device profiles
             fingerprint = {
-                "user_agent": device_profile['user_agent'],
-                "viewport": device_profile['viewport'],
+                "user_agent": device_profile.get('userAgent', self.fingerprint_generator.generate()['user_agent']),
+                "viewport": device_profile.get('viewport', {'width': 1920, 'height': 1080}),
                 "timezone": device_profile.get('timezone', 'America/New_York'),
                 "locale": device_profile.get('locale', 'en-US'),
                 "platform": device_profile.get('platform', 'Win32')
             }
+            self.logger.info(f"Using device profile: {list(device_profile.keys())}")
         else:
             fingerprint = self.fingerprint_generator.generate()
+            self.logger.info("Using generated fingerprint")
         
+        # Validate critical fields
+        if not fingerprint.get("user_agent"):
+            fingerprint["user_agent"] = self.fingerprint_generator.generate()['user_agent']
+            self.logger.warning("Falling back to generated user agent")
+        
+        # Log fingerprint for debugging
+        self.logger.debug(f"Fingerprint: UA={fingerprint['user_agent'][:30]}... | Viewport={fingerprint['viewport']}")
+        
+
         self.playwright = sync_playwright().start()
         
         browser = self.playwright.chromium.launch(

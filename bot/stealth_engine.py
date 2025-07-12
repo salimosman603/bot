@@ -125,8 +125,11 @@ def apply_stealth(context: BrowserContext, device_profile: dict = None):
     
     # Add device-specific headers if available
     if device_profile:
+        ua = device_profile.get('userAgent')
+        if ua:
+            headers.update({"User-Agent": ua})
+        
         headers.update({
-            "User-Agent": device_profile['user_agent'],
             "X-Device-Platform": device_profile.get('platform', 'Win32')
         })
     
