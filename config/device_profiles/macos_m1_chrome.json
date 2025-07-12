@@ -1,0 +1,28 @@
+{
+  "os": "macOS",
+  "osVersion": "12.6",
+  "browser": "Chrome",
+  "browserVersion": "122.0",
+  "device": "Desktop",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "deviceScaleFactor": 2,
+  "isMobile": false,
+  "hasTouch": false,
+  "fonts": [
+    "Helvetica",
+    "Helvetica Neue",
+    "SF Pro",
+    "SF Mono",
+    "Arial"
+  ],
+  "webglVendor": "Apple Inc.",
+  "webglRenderer": "Apple M1 Pro",
+  "audioContext": {
+    "sampleRate": 44100,
+    "channelCount": 2
+  }
+}

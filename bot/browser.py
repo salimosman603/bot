@@ -1,12 +1,15 @@
 import random
 import time
 import logging
+import json
+import os
 from playwright.sync_api import sync_playwright
 from urllib.parse import urljoin
 from .fingerprint import FingerprintGenerator
 from .proxy import ProxyManager
 from .gpu_mouse import human_click
 from .behavior import simulate_reading, random_mouse_movement
+from .adstxt_parser import parse_ads_txt
 from config import settings
 
 class BrowserWrapper:
@@ -16,9 +19,39 @@ class BrowserWrapper:
         self.logger = logging.getLogger('traffic')
         self.playwright = None
 
+    def _load_device_profile(self):
+        """Load a random device profile for enhanced stealth"""
+        profiles_dir = os.path.join(settings.BASE_DIR, 'config', 'device_profiles')
+        if not os.path.exists(profiles_dir):
+            return None
+            
+        profiles = [f for f in os.listdir(profiles_dir) if f.endswith('.json')]
+        if not profiles:
+            return None
+            
+        profile_file = os.path.join(profiles_dir, random.choice(profiles))
+        try:
+            with open(profile_file, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            self.logger.error(f"Failed to load device profile: {str(e)}")
+            return None
+
     def create_context(self):
         proxy = self.proxy_manager.get_verified_proxy()
-        fingerprint = self.fingerprint_generator.generate()
+        device_profile = self._load_device_profile()
+        
+        # Use device profile if available, otherwise generate fingerprint
+        if device_profile:
+            fingerprint = {
+                "user_agent": device_profile['user_agent'],
+                "viewport": device_profile['viewport'],
+                "timezone": device_profile.get('timezone', 'America/New_York'),
+                "locale": device_profile.get('locale', 'en-US'),
+                "platform": device_profile.get('platform', 'Win32')
+            }
+        else:
+            fingerprint = self.fingerprint_generator.generate()
         
         self.playwright = sync_playwright().start()
         
@@ -35,6 +68,7 @@ class BrowserWrapper:
                 '--single-process'
             ]
         )
+        
         context = browser.new_context(
             viewport=fingerprint["viewport"],
             locale=fingerprint["locale"],
@@ -44,9 +78,9 @@ class BrowserWrapper:
             ignore_https_errors=True
         )
         
-        # Apply stealth enhancements
+        # Apply enhanced stealth with device profile
         from .stealth_engine import apply_stealth
-        apply_stealth(context)
+        apply_stealth(context, device_profile)
         
         return browser, context
 
@@ -58,6 +92,11 @@ class BrowserWrapper:
             
             # Start session at random entry point
             entry_url = urljoin(target_config['base_url'], random.choice(target_config['entry_paths']))
+            
+            # Parse ads.txt for legitimate ad networks
+            ad_networks = parse_ads_txt(target_config['base_url'])
+            if ad_networks:
+                self.logger.info(f"Found {len(ad_networks)} authorized ad networks")
             
             # Bypass anti-bot measures
             page.goto("https://google.com", timeout=60000)

@@ -1,0 +1,26 @@
+[
+  {
+    "country": "United States",
+    "region": "California",
+    "city": "Los Angeles",
+    "latitude": 34.0522,
+    "longitude": -118.2437,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "country": "United Kingdom",
+    "region": "England",
+    "city": "London",
+    "latitude": 51.5074,
+    "longitude": -0.1278,
+    "timezone": "Europe/London"
+  },
+  {
+    "country": "Japan",
+    "region": "Kanto",
+    "city": "Tokyo",
+    "latitude": 35.6895,
+    "longitude": 139.6917,
+    "timezone": "Asia/Tokyo"
+  }
+]

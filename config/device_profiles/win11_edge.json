@@ -1,0 +1,28 @@
+{
+  "os": "Windows",
+  "osVersion": "11",
+  "browser": "Edge",
+  "browserVersion": "122.0",
+  "device": "Desktop",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "deviceScaleFactor": 1,
+  "isMobile": false,
+  "hasTouch": false,
+  "fonts": [
+    "Arial",
+    "Times New Roman",
+    "Courier New",
+    "Verdana",
+    "Calibri"
+  ],
+  "webglVendor": "Google Inc. (NVIDIA)",
+  "webglRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "audioContext": {
+    "sampleRate": 48000,
+    "channelCount": 2
+  }
+}
