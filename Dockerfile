@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Install dependencies with xvfb and mesa
+# Install dependencies with optimized layers
 RUN apt-get update && \
     apt-get install -y \
     tor \
@@ -23,15 +23,19 @@ RUN apt-get update && \
     libharfbuzz0b \
     libgdk-pixbuf2.0-0 \
     libsodium-dev \
-    mesa-utils \        
-    libgl1-mesa-glx \   
-    libgl1-mesa-dri \   
-    xauth           
+    mesa-utils \
+    libgl1-mesa-glx \
+    libgl1-mesa-dri \
+    xauth \
+    dbus \
+    # Clean up cache
+    && rm -rf /var/lib/apt/lists/*
 
-# Configure Tor
+# Configure Tor with safe defaults
 RUN echo "SocksPort 0.0.0.0:9050" >> /etc/tor/torrc && \
     echo "Log notice stdout" >> /etc/tor/torrc && \
-    echo "ExitPolicy reject *:*" >> /etc/tor/torrc
+    echo "ExitPolicy reject *:*" >> /etc/tor/torrc && \
+    echo "AvoidDiskWrites 1" >> /etc/tor/torrc
 
 # Set up application
 WORKDIR /app
@@ -40,16 +44,17 @@ COPY . .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r deploy/requirements.txt
 
-# Install Playwright browsers
-RUN playwright install chromium
+# Install Playwright browsers with dependencies
+RUN playwright install --with-deps chromium
 
-# Cleanup to reduce image size
-RUN apt-get purge -y && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+# Fix X display lock conflicts
+RUN echo "#!/bin/bash\n" > /entrypoint.sh && \
+    echo "rm -f /tmp/.X99-lock 2>/dev/null" >> /entrypoint.sh && \
+    echo "Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &" >> /entrypoint.sh && \
+    echo "export DISPLAY=:99" >> /entrypoint.sh && \
+    echo "service tor start" >> /entrypoint.sh && \
+    echo "python start.py" >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
 
-# Start services with proper Xvfb management
-CMD Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset & \
-    export DISPLAY=:99 && \
-    service tor start && \
-    python start.py
+# Set entrypoint with GPU workarounds
+CMD ["/bin/bash", "-c", "LIBGL_ALWAYS_SOFTWARE=1 __GLX_VENDOR_LIBRARY_NAME=mesa /entrypoint.sh"]
