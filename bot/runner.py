@@ -47,10 +47,10 @@ class BotRunner:
                 self.session_counter += 1
                 self.logger.info(f"Completed session {self.session_counter}")
                 
-                # Adaptive cooldown based on session count
+                # Fixed cooldown calculation
                 min_wait, max_wait = settings.SESSION_COOLDOWN
-                cooldown = max_wait - (max_wait - min_wait) * (self.session_counter / settings.MAX_SESSIONS)
-                wait_time = random.uniform(min_wait, cooldown)
+                # Remove adaptive calculation to prevent negative values
+                wait_time = random.uniform(min_wait, max_wait)
                 self.logger.info(f"Waiting {wait_time:.1f} seconds before next session")
                 time.sleep(wait_time)
                 
