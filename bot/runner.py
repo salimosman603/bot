@@ -39,7 +39,7 @@ class BotRunner:
 
     def run(self):
         self.logger.info("Starting bot runner")
-        while self.session_counter < settings.MAX_SESSIONS:
+        while True:
             try:
                 self.logger.info(f"Starting session {self.session_counter + 1}")
                 target = self.target_manager.get_target()

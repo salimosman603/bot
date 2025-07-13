@@ -3,6 +3,8 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+BUYER_ID = "UNSET"
+
 # Proxies file
 PROXIES_FILE = os.path.join(BASE_DIR, 'config', 'proxies.txt')
 
