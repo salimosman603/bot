@@ -222,9 +222,29 @@ class BrowserWrapper:
         if not visible_ads:
             self.logger.warning("No visible ads to click")
             return False
+        
+        # NEW: Filter ads that are actually in the viewport
+        viewport = page.evaluate("() => ({width: window.innerWidth, height: window.innerHeight})")
+        viewport_ads = []
+        
+        for ad in visible_ads:
+            try:
+                box = ad.bounding_box()
+                # Check if ad is within viewport boundaries
+                if (box['x'] + box['width'] >= 0 and 
+                    box['y'] + box['height'] >= 0 and
+                    box['x'] <= viewport['width'] and 
+                    box['y'] <= viewport['height']):
+                    viewport_ads.append(ad)
+            except:
+                continue
+        
+        if not viewport_ads:
+            self.logger.warning("No ads in viewport to click")
+            return False
             
-        # Select random ad
-        ad = random.choice(visible_ads)
+        # Select random ad from those in viewport
+        ad = random.choice(viewport_ads)
         
         try:
             # Get tag name using evaluate
@@ -245,7 +265,7 @@ class BrowserWrapper:
             return True
         except Exception as e:
             self.logger.error(f"Ad click failed: {str(e)}")
-            return False
+            return False 
 
     def find_internal_link(self, page, target_config, visited_pages):
         # Find internal links not yet visited
